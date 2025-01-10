@@ -1,0 +1,386 @@
+@import url(lightbox.css);
+@import '../../node_modules/bootstrap/dist/css/bootstrap.css';
+@import '../../node_modules/bootstrap-icons/font/bootstrap-icons.css';
+.spinner-border {
+  --mo-spinner-width: 4rem;
+  --mo-spinner-height: 4rem;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  margin-bottom: 1px;
+  min-height: 100%;
+  overflow-y: scroll;
+  font: 10px Arial, Helvetica, sans-serif;
+}
+@media screen and (max-width: 767px) {
+  html {
+    font-size: 12px;
+  }
+}
+
+html, body {
+  height: 100%;
+}
+
+:focus {
+  outline: none;
+}
+
+li {
+  list-style: none;
+}
+
+p {
+  font-size: 1.4rem;
+}
+
+a {
+  display: block;
+}
+a:visited {
+  color: #999;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@media (max-width: 992px) {
+  .container-lg, .container-md, .container-sm, .container {
+    max-width: 100% !important;
+  }
+}
+@media (min-width: 992px) {
+  .input-group {
+    width: 50%;
+  }
+}
+#header {
+  text-align: center;
+  display: block;
+  background: #f5f5f5 url(/images/bg-header.jpg) no-repeat center center;
+  margin: 0 0 3rem;
+  padding: 2rem 0;
+}
+#header h2 {
+  font-size: 3rem;
+  color: #FFF;
+  padding: 1rem 0;
+  margin: 0;
+}
+#header #topnav {
+  font-size: 2.8rem;
+  padding: 0;
+  margin: 0;
+}
+#header #topnav li {
+  display: inline-block;
+  margin: 0.8rem 1.8rem;
+}
+#header #topnav li a {
+  color: #FFF;
+  font-weight: 600;
+  line-height: 0;
+  text-transform: capitalize;
+  text-decoration: none;
+  padding: 1rem;
+  text-shadow: 1px 1px 1px #000;
+}
+#header #topnav li a:hover {
+  color: #3C3;
+}
+#header #topnav li a.current {
+  color: #F60;
+}
+@media screen and (max-width: 767px) {
+  #header #topnav {
+    font-size: 1.8rem;
+  }
+  #header #topnav li {
+    margin: 0;
+    padding: 0;
+  }
+  #header #topnav li a {
+    padding: 1rem 0;
+  }
+}
+#header #logo {
+  margin: 0 auto;
+  padding: 3rem 0;
+}
+#header #logo img {
+  border: none;
+}
+
+#loginModal {
+  font-size: 2.4rem;
+}
+#loginModal input {
+  font-size: 75%;
+}
+
+#content {
+  padding-bottom: 30rem;
+  overflow: auto;
+  min-height: 50vh;
+}
+#content h1 {
+  font-size: 3rem;
+  border-bottom: 1px solid #C8C8C8;
+  margin: 0 0 1.5rem;
+  padding: 0 0 1.5rem;
+}
+#content h1 button.btn.btn-primary {
+  margin-left: 2rem;
+}
+#content h2 {
+  clear: both;
+  text-align: left;
+}
+#content p {
+  color: #666;
+  text-align: left;
+  padding: 5px 0px;
+}
+#content i.bi {
+  cursor: pointer;
+  font-size: 2rem;
+}
+#content .card {
+  font-size: 2rem;
+}
+#content .card .card-body {
+  padding-bottom: 3rem;
+}
+#content .card .account {
+  font-size: 1.6rem;
+}
+#content .card .accordion-button {
+  font-size: 1.4rem;
+}
+#content .card .accordion-button h4, #content .card .accordion-button .h4 {
+  width: 90%;
+  margin: 0;
+}
+#content .card .input-group {
+  width: 100%;
+  margin: 1.2rem 0;
+}
+#content .card .input-group .btn {
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+#content .card .holdings .list-group-item {
+  font-size: 1.2rem;
+  padding: 0.5rem 0;
+}
+#content .card .form-switch .form-check-input {
+  cursor: pointer;
+}
+#content .list-group {
+  --bs-list-group-bg: none;
+}
+#content .col-md-6 {
+  width: 50% !important;
+}
+#content .input-group {
+  min-height: 4rem;
+}
+#content .input-group .input-group-text {
+  font-size: 1.5rem;
+}
+#content .input-group .form-control {
+  font-size: 1.6rem;
+}
+#content .input-group .dropdown-item {
+  font-size: 1.8rem;
+}
+#content .input-group .dropdown-item p {
+  font-size: 1.2rem;
+  padding: 0;
+  text-wrap: auto;
+}
+#content .dropdown-menu.show {
+  display: block;
+  width: 60%;
+  top: 4rem;
+  left: 16rem;
+}
+
+#contactme {
+  font-size: 2.4rem;
+  font-weight: bold;
+  padding: 10px 0;
+}
+#contactme a {
+  text-decoration: none;
+  cursor: pointer;
+  text-shadow: 1px 1px 0px #000;
+  color: #999;
+}
+#contactme a:hover {
+  color: #3C3;
+}
+
+/* Gallery Section */
+#loading {
+  text-align: center;
+  padding: 2.5rem;
+  display: none;
+}
+
+#categories {
+  font-size: 2.2rem;
+  color: #999;
+  font-weight: bold;
+  padding: 1rem 0;
+}
+#categories a {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 2rem;
+  text-shadow: 1px 1px 0px #000;
+}
+#categories a:hover {
+  color: #3C3;
+}
+#categories a.active {
+  color: #F60;
+}
+
+#gallery {
+  text-align: center;
+}
+#gallery a {
+  color: #000;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 1rem;
+}
+#gallery a:hover {
+  color: #3C3;
+}
+#gallery .photo_box a {
+  background: #FFF;
+  display: block;
+}
+#gallery .photo_box img {
+  vertical-align: top;
+  opacity: 0.75;
+}
+
+*:first-child + html #gallery .column {
+  display: inline;
+}
+
+/* About Us Section */
+#content article {
+  display: inline-block;
+  vertical-align: top;
+  text-align: center;
+  margin: 20px 10px;
+  width: 280px;
+  height: 220px;
+  border: 1px solid #999;
+  border-radius: 5px;
+  color: #FFF;
+  background: #333;
+}
+#content article h2 {
+  text-align: center;
+  border-bottom: 1px solid #000;
+  padding: 5px 0px;
+  text-shadow: 1px 1px 1px #000;
+}
+#content article ul {
+  border-top: 1px solid #5D5D5D;
+  padding-top: 10px;
+  text-shadow: 1px 1px 1px #000;
+}
+#content article li {
+  padding-top: 5px;
+}
+
+*:first-child + html #content article {
+  display: inline;
+}
+
+/* Contact Us*/
+.helv12red {
+  color: #F00;
+}
+
+.formbox {
+  border: 1px solid #999;
+  padding: 7px;
+  width: 400px;
+  border-radius: 5px;
+  margin: 0px 0px 15px;
+  font-size: 1.6rem;
+  box-shadow: 0 0 3px #CCC;
+  position: relative;
+}
+
+input#send {
+  clear: both;
+  padding: 7px;
+  color: #FFF;
+  background: #333;
+  border-style: none;
+  margin-top: 20px;
+  font-size: 1.6rem;
+  width: 250px;
+  border-radius: 5px;
+}
+
+input#send:hover {
+  background: #666;
+  cursor: pointer;
+}
+
+input.error, textarea.error {
+  border: 1px solid red;
+  background: #FFD7D7;
+}
+
+label.error {
+  background: #F00;
+  border: 1px solid #333;
+  color: #FFF;
+  padding: 5px;
+  position: absolute;
+  left: 425px;
+  width: auto;
+  margin-top: 5px;
+}
+
+label.valid {
+  background: #090;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #333;
+}
+
+/* Footer */
+footer {
+  background: #131313;
+  padding: 20px 0;
+  width: 100%;
+  color: #999999;
+  text-align: center;
+  font-weight: bold;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}/*# sourceMappingURL=styles.css.map */
