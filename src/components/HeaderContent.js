@@ -18,10 +18,11 @@ function HeaderContent() {
 
 	// Use useRouter to get the pathname
 	const router = useRouter();
-	const currentPath = router.pathname;
+	const currentPath = router.asPath;
 
 	// Function to determine active link
 	const active = (val) => {
+		console.log('Active executing, currentPath is', currentPath)
 		if (currentPath === '/' && val === 'home') return 'current';
 		if (currentPath.includes(val)) return 'current';
 		return '';

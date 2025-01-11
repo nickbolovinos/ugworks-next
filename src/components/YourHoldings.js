@@ -60,6 +60,7 @@ const YourHoldings = ({ stock, store, onUpdate, setStockData, refresh }) => {
 
 	useEffect(() => {
 		buildMathFunctions();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [refresh, stock]);
 
 	useEffect(() => {
@@ -77,6 +78,7 @@ const YourHoldings = ({ stock, store, onUpdate, setStockData, refresh }) => {
 			buildMathFunctions()
 			setFormSubmitted(false); // Reset formSubmitted
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [formSubmitted, inputShares, inputPrice, inputAccount]);
 
 	return (
