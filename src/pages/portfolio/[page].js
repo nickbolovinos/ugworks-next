@@ -37,7 +37,7 @@ function PortfolioPage() {
 			console.log('page is ', page);
 			const currentPage = pages.find((item) => item.page === page);
 			if (currentPage) {
-		setAid(currentPage.aid); // Set the aid based on the route
+				setAid(currentPage.aid); // Set the aid based on the route
 			}
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps

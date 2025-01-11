@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteCond %{THE_REQUEST} !/api/graphql [NC]
+RewriteCond %{THE_REQUEST} !/api/stockticker [NC]
+RewriteCond %{THE_REQUEST} !/api/searchstock [NC]
+
+RewriteRule . /index.html [L]

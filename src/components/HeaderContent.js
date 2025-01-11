@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import LoginModal from '@/components/LoginModal';
 
 
@@ -15,19 +16,14 @@ function HeaderContent() {
 		{ 'title': 'contact', 'url': '/contact' }
 	]
 
-	const [currentPath, setCurrentPath] = useState('');
+	// Use useRouter to get the pathname
+	const router = useRouter();
+	const currentPath = router.pathname;
 
-	useEffect(() => {
-		// Ensure this code runs only on the client
-		setCurrentPath(window.location.pathname);
-	}, []);
-
+	// Function to determine active link
 	const active = (val) => {
-		if (currentPath.includes(val)) {
-			return 'current';
-		} else if (currentPath === '/' && val === 'home') {
-			return 'current';
-		}
+		if (currentPath === '/' && val === 'home') return 'current';
+		if (currentPath.includes(val)) return 'current';
 		return '';
 	};
 
