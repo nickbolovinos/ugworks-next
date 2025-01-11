@@ -40,6 +40,7 @@ function PortfolioPage() {
 		setAid(currentPage.aid); // Set the aid based on the route
 			}
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [page]);
 
 	const clickSetAid = (val) => {

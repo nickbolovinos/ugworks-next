@@ -164,6 +164,7 @@ function StockPage() {
 		} else {
 			setStocks(JSON.parse(localStorage.getItem(STOCKS_KEY)))
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [refreshKey]);
 
 	return (
