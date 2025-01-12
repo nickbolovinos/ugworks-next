@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import StockCard from '@/components/StockCard';
-import SearchStock from '@/components/SearchStock';
-import { checkLS, addIndex, formatCurrency, hasMinusSymbol } from '@/utilities/utils';
+'use client'
 
-function StockPage() {
+import React, { useState, useEffect } from 'react';
+import StockCard from '@/components/ui/StockCard';
+import SearchStock from '@/components/ui/SearchStock';
+import { checkLS, addIndex, formatCurrency, hasMinusSymbol } from '@/lib/utils';
+
+const StockPage = () => {
 
 	const STOCKS_KEY = 'stocks';
 	const STOCK_COUNTER_KEY = 'stockCounter';
@@ -154,7 +156,7 @@ function StockPage() {
 	useEffect(() => {
 		// Setup default stocks with unique indices
 		if (!checkLS(STOCKS_KEY)) {
-			let initialStocks = DEFAULT_STOCKS.map(stock => {
+			const initialStocks = DEFAULT_STOCKS.map(stock => {
 				stock.index = addIndex(STOCK_COUNTER_KEY);  // Set index for each default stock
 				return stock;
 			});

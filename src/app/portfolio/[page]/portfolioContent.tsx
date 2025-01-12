@@ -1,37 +1,39 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import ImageCard from '@/components/ImageCard';
-import { checkLS } from '@/utilities/utils';
+import { useParams } from 'next/navigation';
+import ImageCard from '@/components/ui/ImageCard';
+import { checkLS } from '@/lib/utils';
 
-function PortfolioPage() {
+const PortfolioPage = () => {
 
 	const pages = [
 		{ 'page': 'development', 'aid': 2, 'title': 'Web Development'},
-		{ 'page': 'archived', 'aid': 9, 'title': 'Archive'},
 		{ 'page': 'cgi', 'aid': 3, 'title': '3D'},
 		{ 'page': 'print-design', 'aid': 1, 'title': 'Print Design'},
+		{ 'page': 'archived', 'aid': 9, 'title': 'Archived'}
 	]
 
-	const router = useRouter();
-	const { page } = router.query; // Extract 'page' from query
+	const router = useParams();
+	const page = router.page // Extract 'page' from query
 
 	const [data, setData] = useState([]);
-	const [allImagesLoaded, setAllImagesLoaded] = useState(false);
-	const [loadedCount, setLoadedCount] = useState(0);
-	const [aid, setAid] = useState(null)
+	const [allImagesLoaded, setAllImagesLoaded] = useState<boolean>(false);
+	const [loadedCount, setLoadedCount] = useState<number>(0);
+	const [aid, setAid] = useState<number | null>(null);
 
 	const dataLimit = 0
 
 	useEffect(() => {
 		if (typeof window !== 'undefined') {
-			import('jquery');
-			import('lightbox2');
+			//import('jquery');
+			//import('lightbox2');
 		}
 	}, []);
 
-	// Update aid when the page parameter changes
+	// Update aid when the url router parameter changes
 	useEffect(() => {
 		if (page && page !== 'undefined') {
 			console.log('page is ', page);
@@ -41,9 +43,9 @@ function PortfolioPage() {
 			}
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [page]);
+	}, []);	
 
-	const clickSetAid = (val) => {
+	const clickSetAid = (val: number) => {
 		setLoadedCount(0); // Reset the loaded count
 		setAllImagesLoaded(false); // Reset the flag
 		setAid(val); // Update the aid
@@ -77,13 +79,20 @@ function PortfolioPage() {
 				.then(response => {
 					console.log('GraphQL response -',response)
 					setData(response.data.data.getCards); // Save data to state
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
 					localStorage.setItem(aid, JSON.stringify(response.data.data.getCards));
 				})
 				.catch(error => {
 					console.error('Error fetching data:', error);
 				});
 		} else {
-			setData(JSON.parse(localStorage.getItem(aid)))
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			const storedData = localStorage.getItem(aid);
+			if (storedData) {
+				setData(JSON.parse(storedData));
+			}
 		}
 	}, [aid]);
 

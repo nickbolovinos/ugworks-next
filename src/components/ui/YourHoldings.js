@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Accordion, ListGroup } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import { formatCurrency, makeNumeric, hasMinusSymbol, toPercent } from '../utilities/utils';
+import { formatCurrency, makeNumeric, hasMinusSymbol, toPercent } from '@/lib/utils';
 
 const YourHoldings = ({ stock, store, onUpdate, setStockData, refresh }) => {
 

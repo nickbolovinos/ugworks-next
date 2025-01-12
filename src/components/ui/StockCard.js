@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, ListGroup, ListGroupItem } from 'react-bootstrap';
-import { formatCurrency, makeNumeric } from '../utilities/utils';
-import YourHoldings from './YourHoldings';
+import { formatCurrency, makeNumeric } from '@/lib/utils';
+import YourHoldings from '@/components/ui/YourHoldings';
 
 const StockTicker = ({ localStore, refresh, onUpdate, onRemove, setStockData, getMarketStatus }) => {
 	const [data, setData] = useState(null);

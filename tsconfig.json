@@ -27,8 +27,8 @@
 		"**/*.ts",
 		"**/*.tsx",
 		".next/types/**/*.ts",
-		"src/components/layout.js",
+		"src/components/ui/layout.tsx",
 		"src/app/_app.js"
-	],
+, "next.config.js"	],
 	"exclude": ["node_modules"]
 }

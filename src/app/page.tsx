@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import ImageCard from '@/components/ImageCard';
-import { checkLS } from '@/utilities/utils';
+import ImageCard from '@/components/ui/ImageCard';
+import { checkLS } from '@/lib/utils';
 
 const HomePage = () => {
 
@@ -40,13 +42,16 @@ const HomePage = () => {
 				.then(response => {
 					console.log('GraphQL response -',response)
 					setData(response.data.data.getCards); // Save data to state
-					localStorage.setItem(homepageAID, JSON.stringify(response.data.data.getCards));
+					localStorage.setItem(homepageAID.toString(), JSON.stringify(response.data.data.getCards));
 				})
 				.catch(error => {
 					console.error('Error fetching data:', error);
 				});
 		} else {
-			setData(JSON.parse(localStorage.getItem(homepageAID)))
+			const storedData = localStorage.getItem(homepageAID.toString());
+			if (storedData) {
+				setData(JSON.parse(storedData));
+			}
 		}
 	}, []);
 

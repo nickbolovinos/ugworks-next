@@ -1,9 +1,10 @@
-import Layout from '@/components/layout'
+import Layout from '@/app/layout'
 import { AppProvider } from '@/context/AppContext';
-import '@/css/styles.css';
+import '@/styles/styles.css';
 import Head from 'next/head';
 
-export default function MyApp({ Component, pageProps }) {
+const MyApp = ({ Component, pageProps }) => {
+
     return (
         <AppProvider>
             <Layout>
@@ -16,4 +17,7 @@ export default function MyApp({ Component, pageProps }) {
             </Layout>
         </AppProvider>
     )
+
 }
+
+export default MyApp;
