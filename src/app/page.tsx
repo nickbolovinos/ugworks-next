@@ -14,6 +14,20 @@ const HomePage = () => {
 
 	const homepageAID = 2;
 
+	useEffect(() => {
+		// Dynamic import approach
+		const importLibraries = async () => {
+			try {
+				// Dynamically import jQuery and Lightbox
+				await import('jquery')
+				await import('lightbox2')
+			} catch (error) {
+				console.error('Failed to load libraries:', error)
+			}
+		}
+		importLibraries()
+	}, [])
+
 	// Fetch data from backend API
 	useEffect(() => {
 

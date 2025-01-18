@@ -25,6 +25,7 @@ html {
 
 html, body {
   height: 100%;
+  background-color: #F4F5F5;
 }
 
 :focus {

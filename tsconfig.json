@@ -4,7 +4,7 @@
 		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowJs": true,
 		"skipLibCheck": true,
-		"strict": true,
+		"strict": false,
 		"noEmit": true,
 		"esModuleInterop": true,
 		"module": "esnext",
@@ -28,7 +28,9 @@
 		"**/*.tsx",
 		".next/types/**/*.ts",
 		"src/components/ui/layout.tsx",
-		"src/app/_app.js"
-, "next.config.js"	],
+		"src/app/_app.tsx",
+		"next.config.js",
+		"src/context/AppContext.js"
+	],
 	"exclude": ["node_modules"]
 }

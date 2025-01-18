@@ -27,11 +27,19 @@ const PortfolioPage = () => {
 	const dataLimit = 0
 
 	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			//import('jquery');
-			//import('lightbox2');
+		// Dynamic import approach
+		const importLibraries = async () => {
+			try {
+				// Dynamically import jQuery and Lightbox
+				await import('jquery')
+				await import('lightbox2')
+			} catch (error) {
+				console.error('Failed to load libraries:', error)
+			}
 		}
-	}, []);
+
+		importLibraries()
+	}, [])
 
 	// Update aid when the url router parameter changes
 	useEffect(() => {
@@ -112,7 +120,7 @@ const PortfolioPage = () => {
 			<div id="categories">
 				Sections:
 				{pages.map((row, index) => (
-					<Link key={index} href={row.page} className={row.aid === aid ? 'active' : 'non'} onClick={() => clickSetAid(row.aid)} >{row.title}</Link>
+					<Link key={index} href={`/portfolio/${row.page}`} className={row.aid === aid ? 'active' : 'non'} onClick={() => clickSetAid(row.aid)} >{row.title}</Link>
 				))}
 			</div>
 			{ data?.length > 0 ? (
