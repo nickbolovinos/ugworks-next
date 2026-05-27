@@ -42,7 +42,7 @@ const SearchStock = ({onSelect}) => {
 				onChange={onUserEntry}
 			/>
 			{data && data.length > 0 && (
-				<Dropdown show="true">
+				<Dropdown show={true}>
 					<Dropdown.Menu>
 						{data.map((row, index) => (
 							<Dropdown.Item key={index} onClick={() => addStock(row)}>
