@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, ListGroup, ListGroupItem } from 'react-bootstrap';
-import { formatCurrency, makeNumeric } from '../utilities/utils';
-import YourHoldings from './YourHoldings';
+import { formatCurrency, makeNumeric } from '@/lib/utils';
+import YourHoldings from '@/components/ui/YourHoldings';
 
 const StockTicker = ({ localStore, refresh, onUpdate, onRemove, setStockData, getMarketStatus }) => {
 	const [data, setData] = useState(null);
@@ -17,9 +17,11 @@ const StockTicker = ({ localStore, refresh, onUpdate, onRemove, setStockData, ge
 			.post(apiURL, request)
 			.then((response) => {
 				const data = response.data.data;
-				//console.log('Stock Data:', data);
-				getMarketStatus(data.marketStatus)
-				if (data.marketStatus !== 'Open' && data.marketStatus !== 'Closed') {
+				console.log('Stock Data:', data);
+				if (data.marketStatus) {
+					getMarketStatus(data.marketStatus)
+				}
+				if (data.marketStatus !== 'Open' && data.marketStatus !== 'Closed' && data.marketStatus !== null) {
 					data.primaryData = data.secondaryData;
 				}
 				setLastSalePrice(makeNumeric(data.primaryData.lastSalePrice));

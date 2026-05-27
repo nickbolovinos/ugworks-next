@@ -1,37 +1,47 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import ImageCard from '@/components/ImageCard';
-import { checkLS } from '@/utilities/utils';
+import { useParams } from 'next/navigation';
+import ImageCard from '@/components/ui/ImageCard';
+import { checkLS } from '@/lib/utils';
 
-function PortfolioPage() {
+const PortfolioPage = () => {
 
 	const pages = [
 		{ 'page': 'development', 'aid': 2, 'title': 'Web Development'},
-		{ 'page': 'archived', 'aid': 9, 'title': 'Archive'},
 		{ 'page': 'cgi', 'aid': 3, 'title': '3D'},
 		{ 'page': 'print-design', 'aid': 1, 'title': 'Print Design'},
+		{ 'page': 'archived', 'aid': 9, 'title': 'Archived'}
 	]
 
-	const router = useRouter();
-	const { page } = router.query; // Extract 'page' from query
+	const router = useParams();
+	const page = router.page // Extract 'page' from query
 
 	const [data, setData] = useState([]);
-	const [allImagesLoaded, setAllImagesLoaded] = useState(false);
-	const [loadedCount, setLoadedCount] = useState(0);
-	const [aid, setAid] = useState(null)
+	const [allImagesLoaded, setAllImagesLoaded] = useState<boolean>(false);
+	const [loadedCount, setLoadedCount] = useState<number>(0);
+	const [aid, setAid] = useState<number | null>(null);
 
 	const dataLimit = 0
 
 	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			import('jquery');
-			import('lightbox2');
+		// Dynamic import approach
+		const importLibraries = async () => {
+			try {
+				// Dynamically import jQuery and Lightbox
+				await import('jquery')
+				await import('lightbox2')
+			} catch (error) {
+				console.error('Failed to load libraries:', error)
+			}
 		}
-	}, []);
 
-	// Update aid when the page parameter changes
+		importLibraries()
+	}, [])
+
+	// Update aid when the url router parameter changes
 	useEffect(() => {
 		if (page && page !== 'undefined') {
 			console.log('page is ', page);
@@ -41,9 +51,9 @@ function PortfolioPage() {
 			}
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [page]);
+	}, []);	
 
-	const clickSetAid = (val) => {
+	const clickSetAid = (val: number) => {
 		setLoadedCount(0); // Reset the loaded count
 		setAllImagesLoaded(false); // Reset the flag
 		setAid(val); // Update the aid
@@ -77,19 +87,26 @@ function PortfolioPage() {
 				.then(response => {
 					console.log('GraphQL response -',response)
 					setData(response.data.data.getCards); // Save data to state
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
 					localStorage.setItem(aid, JSON.stringify(response.data.data.getCards));
 				})
 				.catch(error => {
 					console.error('Error fetching data:', error);
 				});
 		} else {
-			setData(JSON.parse(localStorage.getItem(aid)))
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			const storedData = localStorage.getItem(aid);
+			if (storedData) {
+				setData(JSON.parse(storedData));
+			}
 		}
 	}, [aid]);
 
 	useEffect(() => {
 		if (loadedCount === (dataLimit > 0 ? dataLimit : data?.length)) {
-			setAllImagesLoaded(true);
+			setTimeout(() => setAllImagesLoaded(true), 500);
 		}
 	}, [loadedCount, data, dataLimit ]);
 
@@ -103,17 +120,20 @@ function PortfolioPage() {
 			<div id="categories">
 				Sections:
 				{pages.map((row, index) => (
-					<Link key={index} href={row.page} className={row.aid === aid ? 'active' : 'non'} onClick={() => clickSetAid(row.aid)} >{row.title}</Link>
+					<Link key={index} href={`/portfolio/${row.page}`} className={row.aid === aid ? 'active' : 'non'} onClick={() => clickSetAid(row.aid)} >{row.title}</Link>
 				))}
 			</div>
 			{ data?.length > 0 ? (
 				<>
-					<div className={`d-flex justify-content-center ${ allImagesLoaded ? 'd-none'  : {}}`}>
+					<div className={`d-flex justify-content-center ${ allImagesLoaded ? 'd-none'  : ''}`}>
 						<div className="spinner-border m-5" role="status">
 							<span className="visually-hidden">Loading...</span>
 						</div>
 					</div>
-					<div id="gallery" className={`row gx-5 ${ allImagesLoaded ? {} : 'd-none' }`}>
+					<div id="gallery" className="row gx-5" style={{
+						    opacity: allImagesLoaded ? 1 : 0,
+						    transition: 'opacity 0.4s ease'
+						}}>
 						{data?.slice(0, (dataLimit > 0 ? dataLimit : data?.length)).map((row, index) => (
 							<ImageCard key={index} data={row} onLoad={handleImageLoad}/>
 						))}

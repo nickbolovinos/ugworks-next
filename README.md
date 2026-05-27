@@ -34,3 +34,14 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+## Custom Commands
+npm run server
+## to run localhost at port 4000 (http://localhost:4000/stocks)
+## Search Stock Symbol Server running at //localhost:3002
+## Stock Ticker Server running at //localhost:3001
+## GraphQL MySQL Server running at //localhost:3500
+
+npm run build
+## builds codebase to deployable code in the /out directory

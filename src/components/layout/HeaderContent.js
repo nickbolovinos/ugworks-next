@@ -3,28 +3,28 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
-import LoginModal from '@/components/LoginModal';
+import { usePathname } from 'next/navigation';
+import LoginModal from '@/components/ui/LoginModal';
 
 
-function HeaderContent() {
+const HeaderContent = () => {
 
 	const topnav = [
 		{ 'title': 'home', 'url': '/' },
 		{ 'title': 'stocks', 'url': '/stocks' },
+		{ 'title': 'taxes', 'url': '/taxes' },
+		{ 'title': 'dividends', 'url': '/dividends' },
 		{ 'title': 'portfolio', 'url': '/portfolio' },
-		{ 'title': 'contact', 'url': '/contact' }
+		//{ 'title': 'contact', 'url': '/contact' }
 	]
 
-	// Use useRouter to get the pathname
-	const router = useRouter();
-	const currentPath = router.asPath;
+	// usePathname(); to get the URL pathname
+	const currentPath = usePathname();
 
 	// Function to determine active link
 	const active = (val) => {
-		console.log('Active executing, currentPath is', currentPath)
 		if (currentPath === '/' && val === 'home') return 'current';
-		if (currentPath.includes(val)) return 'current';
+		if (currentPath?.includes(val)) return 'current';
 		return '';
 	};
 
