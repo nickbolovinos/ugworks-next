@@ -12,12 +12,22 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 	const [lastSalePrice, setLastSalePrice] = useState(null);
 	const isMountedRef = useRef(true);
 	const symbolRef = useRef(localStore?.symbol);
+	const lastRefreshRef = useRef(refresh);
+	const shouldBypassCacheRef = useRef(false);
 
 	useEffect(() => {
 		return () => {
 			isMountedRef.current = false;
 		};
 	}, []);
+
+	// Track when refresh changes and mark to bypass cache on next fetch
+	useEffect(() => {
+		if (refresh !== lastRefreshRef.current) {
+			lastRefreshRef.current = refresh;
+			shouldBypassCacheRef.current = true;
+		}
+	}, [refresh]);
 
 	const handleDataUpdate = useCallback((stockData) => {
 		if (!isMountedRef.current) return;
@@ -41,8 +51,11 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 			return;
 		}
 
-		// Check if data exists in cache
-		if (stockDataCache.has(symbol)) {
+		const bypassCache = shouldBypassCacheRef.current;
+		shouldBypassCacheRef.current = false;
+
+		// Check if data exists in cache (unless bypassing for refresh)
+		if (!bypassCache && stockDataCache.has(symbol)) {
 			const cachedData = stockDataCache.get(symbol);
 			if (isMountedRef.current) {
 				handleDataUpdate(cachedData);
@@ -67,7 +80,7 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 			? 'http://localhost:3001/api/stockticker' 
 			: '/api/stockticker/';
 
-		console.log(`Fetching data for ${symbol}:`, localStore);
+		console.log(`Fetching data for ${symbol}`);
 
 		axios
 			.post(apiURL, localStore)
@@ -124,7 +137,7 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 				requestsInFlight.delete(symbol);
 			});
 
-	}, [refresh, localStore?.symbol, handleDataUpdate]);
+	}, [refresh, localStore, handleDataUpdate]);
 
 	return { data, lastSalePrice };
 };
