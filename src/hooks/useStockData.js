@@ -106,7 +106,7 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 								if (isMountedRef.current && symbolRef.current === symbol) {
 									makeRequest();
 								}
-							}, 10000);
+							}, 3000);
 							return;
 						}
 

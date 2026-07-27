@@ -19,9 +19,10 @@ app.use(express.json());
 
 // MySQL Connection Pool
 const pool = mysql.createPool({
-	host: process.env.DB_HOST,
+	host: process.env.DB_HOST || '127.0.0.1',
 	user: process.env.DB_USER,
-	password: process.env.DB_PASSWORD,
+	// If DB_PASSWORD is empty, pass undefined so mysql2 will attempt a no-password connection
+	password: process.env.DB_PASSWORD || undefined,
 	multipleStatements: true,
 	waitForConnections: true,
 	connectionLimit: 10,
@@ -52,14 +53,15 @@ const createTableQuery = `
 pool.query(createSchemaQuery, (err) => {
 	if (err) {
 		console.error('Error creating schema:', err.message);
-		return
+		console.error('Make sure MySQL is running and .env file is properly configured with DB credentials');
+		process.exit(1);
 	}
 	console.log('Schema created or exists!');
 
 	pool.query(createTableQuery, (err) => {
 		if (err) {
 			console.error('Error creating table:', err.message);
-			return
+			process.exit(1);
 		}
 		console.log('Table created or exists!');
 	});
