@@ -1,37 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 import { Card, ListGroup, ListGroupItem } from 'react-bootstrap';
-import { formatCurrency, makeNumeric } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import YourHoldings from '@/components/ui/YourHoldings';
+import { useStockData } from '@/hooks/useStockData';
 
 const StockTicker = ({ localStore, refresh, onUpdate, onRemove, setStockData, getMarketStatus }) => {
-	const [data, setData] = useState(null);
-	const [lastSalePrice, setLastSalePrice] = useState(null);
-
-	useEffect(() => {
-		const request = localStore;
-
-		const apiURL = (window.location.host.indexOf('local') > -1) ? 'http://localhost:3001/api/stockticker' : '/api/stockticker/';
-
-		axios
-			.post(apiURL, request)
-			.then((response) => {
-				const data = response.data.data;
-				console.log('Stock Data:', data);
-				if (data.marketStatus) {
-					getMarketStatus(data.marketStatus)
-				}
-				if (data.marketStatus !== 'Open' && data.marketStatus !== 'Closed' && data.marketStatus !== null) {
-					data.primaryData = data.secondaryData;
-				}
-				setLastSalePrice(makeNumeric(data.primaryData.lastSalePrice));
-				setData(data); // Set the stock data object
-			})
-			.catch((error) => {
-				console.error('Error fetching data:', error);
-			});
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [refresh]);
+	const { data, lastSalePrice } = useStockData(localStore, refresh, getMarketStatus);
 
 	const removeStock = () => {
 		onRemove(localStore); // Notify the parent to remove this item
