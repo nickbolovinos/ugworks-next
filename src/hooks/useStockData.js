@@ -14,10 +14,17 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 	const symbolRef = useRef(localStore?.symbol);
 	const lastRefreshRef = useRef(refresh);
 	const shouldBypassCacheRef = useRef(false);
+	const retryTimeoutRef = useRef(null);
+	const retryCountRef = useRef(0);
+	const maxRetriesRef = useRef(3);
 
 	useEffect(() => {
 		return () => {
 			isMountedRef.current = false;
+			// Clean up retry timeout if component unmounts
+			if (retryTimeoutRef.current) {
+				clearTimeout(retryTimeoutRef.current);
+			}
 		};
 	}, []);
 
@@ -76,66 +83,103 @@ export const useStockData = (localStore, refresh, getMarketStatus) => {
 		// Mark request as in-flight
 		requestsInFlight.set(symbol, true);
 
-		const apiURL = (typeof window !== 'undefined' && window.location.host.indexOf('local') > -1) 
-			? 'http://localhost:3001/api/stockticker' 
-			: '/api/stockticker/';
+		const makeRequest = () => {
+			const apiURL = (typeof window !== 'undefined' && window.location.host.indexOf('local') > -1) 
+				? 'http://localhost:3001/api/stockticker' 
+				: '/api/stockticker/';
 
-		console.log(`Fetching data for ${symbol}`);
+			console.log(`Fetching data for ${symbol}`);
 
-		axios
-			.post(apiURL, localStore)
-			.then((response) => {
-				const responseData = response.data.data;
-				
-				if (!responseData) {
-					requestsInFlight.delete(symbol);
-					return;
-				}
-
-				console.log('Stock Data:', responseData);
-
-				// Normalize data if market is not Open/Closed
-				if (responseData?.marketStatus !== 'Open' && responseData?.marketStatus !== 'Closed' && responseData?.marketStatus !== null) {
-					if (responseData?.secondaryData) {
-						responseData.primaryData = responseData.secondaryData;
-					}
-				}
-
-				// Cache the data
-				stockDataCache.set(symbol, responseData);
-
-				// Update current component
-				if (isMountedRef.current && symbolRef.current === symbol) {
-					handleDataUpdate(responseData);
-				}
-
-				// Notify all subscribers
-				const subs = subscribers.get(symbol);
-				if (subs) {
-					subs.forEach(callback => {
-						try {
-							callback(responseData);
-						} catch (err) {
-							console.error('Error in subscriber callback:', err);
+			axios
+				.post(apiURL, localStore)
+				.then((response) => {
+					const responseData = response.data.data;
+					const status = response.data.status;
+					
+					if (!responseData) {
+						// API error - check if we should retry
+						if (retryCountRef.current < maxRetriesRef.current) {
+							retryCountRef.current++;
+							console.warn(`API error for ${symbol}: ${status?.bCodeMessage?.[0]?.errorMessage || 'Unknown error'}. Retrying in 10 seconds (attempt ${retryCountRef.current}/${maxRetriesRef.current})...`);
+							
+							retryTimeoutRef.current = setTimeout(() => {
+								if (isMountedRef.current && symbolRef.current === symbol) {
+									makeRequest();
+								}
+							}, 10000);
+							return;
 						}
-					});
-					subscribers.delete(symbol);
-				}
 
-				// Clean up in-flight request
-				requestsInFlight.delete(symbol);
-			})
-			.catch((error) => {
-				console.error(`Error fetching data for ${symbol}:`, error);
-				
-				// Notify subscribers of error
-				const subs = subscribers.get(symbol);
-				if (subs) {
-					subscribers.delete(symbol);
-				}
-				
-				requestsInFlight.delete(symbol);
-			});
+						// Max retries reached
+						console.error(`API error for ${symbol}: ${status?.bCodeMessage?.[0]?.errorMessage || 'Unknown error'}. Max retries reached.`);
+						
+						// Notify subscribers of final failure
+						const subs = subscribers.get(symbol);
+						if (subs) {
+							subs.forEach(callback => {
+								try {
+									callback(null);
+								} catch (err) {
+									console.error('Error notifying subscriber:', err);
+								}
+							});
+							subscribers.delete(symbol);
+						}
+						
+						requestsInFlight.delete(symbol);
+						retryCountRef.current = 0;
+						return;
+					}
+
+					// Success - reset retry count
+					retryCountRef.current = 0;
+					console.log('Stock Data:', responseData);
+
+					// Normalize data if market is not Open/Closed
+					if (responseData?.marketStatus !== 'Open' && responseData?.marketStatus !== 'Closed' && responseData?.marketStatus !== null) {
+						if (responseData?.secondaryData) {
+							responseData.primaryData = responseData.secondaryData;
+						}
+					}
+
+					// Cache the data
+					stockDataCache.set(symbol, responseData);
+
+					// Update current component
+					if (isMountedRef.current && symbolRef.current === symbol) {
+						handleDataUpdate(responseData);
+					}
+
+					// Notify all subscribers
+					const subs = subscribers.get(symbol);
+					if (subs) {
+						subs.forEach(callback => {
+							try {
+								callback(responseData);
+							} catch (err) {
+								console.error('Error in subscriber callback:', err);
+							}
+						});
+						subscribers.delete(symbol);
+					}
+
+					// Clean up in-flight request
+					requestsInFlight.delete(symbol);
+				})
+				.catch((error) => {
+					console.error(`Network error fetching data for ${symbol}:`, error);
+					
+					// Notify subscribers of error
+					const subs = subscribers.get(symbol);
+					if (subs) {
+						subscribers.delete(symbol);
+					}
+					
+					requestsInFlight.delete(symbol);
+				});
+		};
+
+		makeRequest();
 
 	}, [refresh, localStore, handleDataUpdate]);
 
