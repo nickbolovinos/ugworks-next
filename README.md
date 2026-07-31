@@ -6,7 +6,6 @@ First, run the development server:
 
 ```bash
 npm run server
-
 ```
 
 Open [http://localhost:4000/] with your browser to see the result.
@@ -32,11 +31,16 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 ## Custom Commands
-npm run server
-## to run localhost at port 4000 (http://localhost:4000/stocks)
-## Search Stock Symbol Server running at //localhost:3002
-## Stock Ticker Server running at //localhost:3001
-## GraphQL MySQL Server running at //localhost:3500
 
+```bash
+npm run server
+```
+- to run localhost at port 4000 (http://localhost:4000/stocks)
+- Search Stock Symbol Server running at //localhost:3002
+- Stock Ticker Server running at //localhost:3001
+- GraphQL MySQL Server running at //localhost:3500
+
+```bash
 npm run build
-## builds codebase to deployable code in the /out directory
+```
+- builds codebase to deployable code in the /out directory
