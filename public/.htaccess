@@ -11,3 +11,7 @@
 		Header set Cache-Control "public, max-age=31536000, immutable"
 	</FilesMatch>
 </IfModule>
+<IfModule LiteSpeed>
+	RewriteEngine On
+	RewriteRule .* - [E=verifycaptcha:deny]
+</IfModule>
