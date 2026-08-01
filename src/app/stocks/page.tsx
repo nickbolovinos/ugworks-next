@@ -59,7 +59,6 @@ interface SortableStockCardProps {
 	item: Stock;
 	index: number;
 	refresh: number;
-	order: number;
 	onUpdate: (item: Stock) => void;
 	onRemove: (item: Stock) => void;
 	setStockData: (newData: StockCalc[]) => void;
@@ -125,8 +124,8 @@ const loadStocksFromStorage = (): Stock[] | null => {
 	}
 };
 
-const SortableStockCard = ({ item, index, order, refresh, onUpdate, onRemove, setStockData, getMarketStatus }: SortableStockCardProps) => {
-	const { handleRef, ref, isDragging, isOverlay } = useSortable({
+const SortableStockCard = ({ item, index, refresh, onUpdate, onRemove, setStockData, getMarketStatus }: SortableStockCardProps) => {
+	const { handleRef, ref, isDragging } = useSortable({
 		id: item.uid,
 		index,
 		data: { stock: item },
@@ -136,7 +135,6 @@ const SortableStockCard = ({ item, index, order, refresh, onUpdate, onRemove, se
 		<div ref={ref} data-stock-uid={item.uid} style={{ opacity: isDragging ? 0.75 : 1 }}>
 			<StockCard
 				localStore={item}
-				order={order}
 				refresh={refresh}
 				setStockData={setStockData}
 				onUpdate={onUpdate}
@@ -351,14 +349,11 @@ const StockPage = () => {
 			<DragDropProvider onDragEnd={handleDragEnd}>
 				<div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 my-4" ref={containerRef}>
 					{orderedStocks.map((item) => {
-						const displayOrder = (item.index ?? 0) + 1;
-
 						return (
 							<SortableStockCard
 								key={item.uid}
 								item={item}
 								index={item.index}
-								order={displayOrder}
 								refresh={refreshKey}
 								setStockData={getStockData}
 								onUpdate={updateStock}
