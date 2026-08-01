@@ -240,10 +240,11 @@ const StockPage = () => {
 					dailyGain: acc.dailyGain + s.dailyGain,
 					netGain: acc.netGain + s.netGain,
 					totalValue: acc.totalValue + s.totalValue,
-					netPercent: Number(((acc.dailyGain / (acc.totalValue - acc.dailyGain)) * 100).toFixed(2))
 				};
-			}, { dailyGain: 0, netGain: 0, totalValue: 0, netPercent: 0 });
-			setTotalHoldings(totals);
+			}, { dailyGain: 0, netGain: 0, totalValue: 0 });
+
+			const netPercent = Number(((totals.dailyGain / (totals.totalValue - totals.dailyGain)) * 100).toFixed(2));
+			setTotalHoldings({ ...totals, netPercent });
 		}
 	}, [stockData, stocks]);
 
