@@ -266,7 +266,7 @@ const StockPage = () => {
 		}));
 		const nextStocks = persistStocks(initialStocks);
 		dispatch(setStocks(nextStocks));
-	}, [dispatch, refreshKey]);
+	}, [dispatch]);
 
 	useEffect(() => {
 		if (!initialLoadComplete.current && stocks.length > 0) {
@@ -354,7 +354,7 @@ const StockPage = () => {
 
 						return (
 							<SortableStockCard
-								key={`${item.uid}-${displayOrder}`}
+								key={item.uid}
 								item={item}
 								index={item.index}
 								order={displayOrder}

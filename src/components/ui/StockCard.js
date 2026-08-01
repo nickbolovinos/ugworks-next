@@ -4,7 +4,7 @@ import { formatCurrency } from '@/lib/utils';
 import YourHoldings from '@/components/ui/YourHoldings';
 import { useStockData } from '@/hooks/useStockData';
 
-const StockTicker = ({ localStore, order, refresh, onUpdate, onRemove, setStockData, getMarketStatus, handleRef }) => {
+const StockTicker = ({ localStore, refresh, onUpdate, onRemove, setStockData, getMarketStatus, handleRef }) => {
 	const { data, lastSalePrice } = useStockData(localStore, refresh, getMarketStatus);
 
 	const removeStock = () => {
