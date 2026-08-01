@@ -2,14 +2,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface Stock {
+	uid: string;
 	index: number;
 	symbol: string;
 	asset: string;
 	initialShares: number | null;
+	initialPrice: number | null;
 	account: string;
 	virtual: boolean;
 	dividends: boolean;
-	currentShares: number;
+	currentShares: number | null;
 }
 
 interface StocksState {
@@ -27,6 +29,9 @@ const stocksSlice = createSlice({
 		setStocks(state, action: PayloadAction<Stock[]>) {
 			state.items = action.payload;
 		},
+		reorderStocks(state, action: PayloadAction<Stock[]>) {
+			state.items = action.payload;
+		},
 		addStock(state, action: PayloadAction<Stock>) {
 			state.items.push(action.payload);
 		},
@@ -42,5 +47,5 @@ const stocksSlice = createSlice({
 	}
 });
 
-export const { setStocks, addStock, updateStock, removeStock } = stocksSlice.actions;
+export const { setStocks, reorderStocks, addStock, updateStock, removeStock } = stocksSlice.actions;
 export default stocksSlice.reducer;

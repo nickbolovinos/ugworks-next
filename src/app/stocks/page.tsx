@@ -2,17 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { DragDropProvider, type DragEndEvent } from '@dnd-kit/react';
+import { useSortable } from '@dnd-kit/react/sortable';
 import { RootState } from '@/app/store';
-import { setStocks, addStock as addStockAction, updateStock as updateStockAction, removeStock as removeStockAction } from '@/app/stocks/redux/stocksSlice';
+import { setStocks } from '@/app/stocks/redux/stocksSlice';
 import StockCard from '@/components/ui/StockCard';
 import SearchStock from '@/components/ui/SearchStock';
-import { checkLS, addIndex, formatCurrency, hasMinusSymbol } from '@/lib/utils';
+import { addIndex, formatCurrency, hasMinusSymbol } from '@/lib/utils';
 import { ListGroup } from 'react-bootstrap';
 
 const STOCKS_KEY = 'stocks';
 const STOCK_COUNTER_KEY = 'stockCounter';
 
 interface Stock {
+	uid: string;
 	index: number;
 	symbol: string;
 	asset: string;
@@ -38,7 +41,7 @@ interface StockCalc {
 }
 
 const DEFAULT_KEYS: (keyof Stock)[] = ['index', 'symbol', 'asset', 'initialShares', 'initialPrice', 'account', 'virtual', 'dividends', 'currentShares'];
-const DEFAULT_STOCKS: Stock[] = [
+const DEFAULT_STOCKS: Omit<Stock, 'uid'>[] = [
 	{ index: 0, symbol: 'AAPL', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
 	{ index: 1, symbol: 'AVGO', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
 	{ index: 2, symbol: 'MSFT', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
@@ -52,6 +55,99 @@ interface TotalHoldings {
 	netPercent: number;
 }
 
+interface SortableStockCardProps {
+	item: Stock;
+	index: number;
+	refresh: number;
+	order: number;
+	onUpdate: (item: Stock) => void;
+	onRemove: (item: Stock) => void;
+	setStockData: (newData: StockCalc[]) => void;
+	getMarketStatus: (market: string) => void;
+}
+
+const sortStocks = (items: Stock[]) => [...items].sort((a, b) => a.index - b.index);
+
+const createStockUid = () => {
+	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+		return crypto.randomUUID();
+	}
+	return `stock-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const persistStocks = (items: Stock[]) => {
+	return items.map((stock, index) => ({
+		...stock,
+		uid: stock.uid ?? createStockUid(),
+		index,
+	}));
+};
+
+const saveStocksToStorage = (items: Stock[]) => {
+	const normalizedStocks = items.map((stock, index) => {
+		const normalizedStock = { ...stock };
+		delete normalizedStock.uid;
+		return {
+			...normalizedStock,
+			index,
+		};
+	});
+	localStorage.setItem(STOCKS_KEY, JSON.stringify(normalizedStocks));
+};
+
+const persistAndSaveStocks = (items: Stock[]) => {
+	const nextStocks = persistStocks(items);
+	if (typeof window !== 'undefined') {
+		saveStocksToStorage(nextStocks);
+	}
+	return nextStocks;
+};
+
+const loadStocksFromStorage = (): Stock[] | null => {
+	const raw = localStorage.getItem(STOCKS_KEY);
+	if (!raw) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(raw);
+		if (!Array.isArray(parsed) || parsed.length === 0) {
+			return null;
+		}
+
+		return parsed.map((stock, index) => ({
+			...stock,
+			index,
+			uid: stock.uid ?? createStockUid(),
+		}));
+	} catch {
+		return null;
+	}
+};
+
+const SortableStockCard = ({ item, index, order, refresh, onUpdate, onRemove, setStockData, getMarketStatus }: SortableStockCardProps) => {
+	const { handleRef, ref, isDragging, isOverlay } = useSortable({
+		id: item.uid,
+		index,
+		data: { stock: item },
+	});
+
+	return (
+		<div ref={ref} data-stock-uid={item.uid} style={{ opacity: isDragging ? 0.75 : 1 }}>
+			<StockCard
+				localStore={item}
+				order={order}
+				refresh={refresh}
+				setStockData={setStockData}
+				onUpdate={onUpdate}
+				onRemove={onRemove}
+				getMarketStatus={getMarketStatus}
+				handleRef={handleRef}
+			/>
+		</div>
+	);
+};
+
 const StockPage = () => {
 	const dispatch = useDispatch();
 	const stocks = useSelector((state: RootState) => state.stocks.items);
@@ -60,6 +156,7 @@ const StockPage = () => {
 	const [stockData, setStockData] = useState<StockCalc[]>([]);
 	const [totalHoldings, setTotalHoldings] = useState<TotalHoldings>({ dailyGain: 0, netGain: 0, totalValue: 0, netPercent: 0 });
 	const [marketStatus, setMarketStatus] = useState<string | null>(null);
+	const initialLoadComplete = React.useRef(false);
 
 	const fetchStocks = () => setRefreshKey(prev => prev + 1);
 
@@ -72,8 +169,9 @@ const StockPage = () => {
 			}, {} as Stock);
 
 			newStock.index = addIndex(STOCK_COUNTER_KEY);
-			dispatch(addStockAction(newStock));
-			localStorage.setItem(STOCKS_KEY, JSON.stringify([...stocks, newStock]));
+			newStock.uid = createStockUid();
+			const nextStocks = persistAndSaveStocks([...stocks, newStock]);
+			dispatch(setStocks(nextStocks));
 		};
 
 		if (!exists) {
@@ -84,16 +182,16 @@ const StockPage = () => {
 	};
 
 	const removeStock = (stock: Stock) => {
-		dispatch(removeStockAction(stock.index));
-		localStorage.setItem(STOCKS_KEY, JSON.stringify(stocks.filter(s => s.index !== stock.index)));
+		const nextStocks = persistAndSaveStocks(stocks.filter(s => s.index !== stock.index));
+		dispatch(setStocks(nextStocks));
 	};
 
 	const updateStock = (item: Stock) => {
-		dispatch(updateStockAction(item));
 		const updatedStocks = stocks.map(s =>
 			s.index === item.index ? { ...s, ...item } : s
 		);
-		localStorage.setItem(STOCKS_KEY, JSON.stringify(updatedStocks));
+		const nextStocks = persistAndSaveStocks(updatedStocks);
+		dispatch(setStocks(nextStocks));
 	};
 
 	const getStockData = (newData: StockCalc[]) => {
@@ -107,6 +205,31 @@ const StockPage = () => {
 
 	const getMarketStatus = (market: string) => {
 		setMarketStatus(market);
+	};
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		const activeId = event.operation?.source?.id;
+		const overId = event.operation?.target?.id;
+
+		if (activeId == null || overId == null || activeId === overId) {
+			return;
+		}
+
+		const orderedStocks = sortStocks(stocks);
+		const fromIndex = orderedStocks.findIndex(stock => String(stock.uid) === String(activeId));
+		const toIndex = orderedStocks.findIndex(stock => String(stock.uid) === String(overId));
+
+		if (fromIndex === -1 || toIndex === -1) {
+			return;
+		}
+
+		const reorderedStocks = [...orderedStocks];
+		const [movedStock] = reorderedStocks.splice(fromIndex, 1);
+		const adjustedIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
+		reorderedStocks.splice(adjustedIndex, 0, movedStock);
+
+		const nextStocks = persistAndSaveStocks(reorderedStocks);
+		dispatch(setStocks(nextStocks));
 	};
 
 	useEffect(() => {
@@ -125,18 +248,82 @@ const StockPage = () => {
 	}, [stockData, stocks]);
 
 	useEffect(() => {
-		if (!checkLS(STOCKS_KEY)) {
-			const initial = DEFAULT_STOCKS.map(stock => ({
-				...stock,
-				index: addIndex(STOCK_COUNTER_KEY)
-			}));
-			dispatch(setStocks(initial));
-			localStorage.setItem(STOCKS_KEY, JSON.stringify(initial));
-		} else {
-			const raw = localStorage.getItem(STOCKS_KEY);
-			if (raw) dispatch(setStocks(JSON.parse(raw)));
+		if (typeof window === 'undefined') {
+			return;
 		}
+
+		const storedStocks = loadStocksFromStorage();
+		if (storedStocks) {
+			const nextStocks = persistStocks(storedStocks);
+			dispatch(setStocks(nextStocks));
+			return;
+		}
+
+		const initialStocks = DEFAULT_STOCKS.map(stock => ({
+			...stock,
+			index: addIndex(STOCK_COUNTER_KEY),
+			uid: createStockUid(),
+		}));
+		const nextStocks = persistStocks(initialStocks);
+		dispatch(setStocks(nextStocks));
 	}, [dispatch, refreshKey]);
+
+	useEffect(() => {
+		if (!initialLoadComplete.current && stocks.length > 0) {
+			initialLoadComplete.current = true;
+		}
+	}, [stocks]);
+
+	useEffect(() => {
+		if (!initialLoadComplete.current) {
+			return;
+		}
+
+		saveStocksToStorage(stocks);
+	}, [stocks]);
+
+	const orderedStocks = sortStocks(stocks);
+	const lastOrderRef = React.useRef<string>('');
+	const containerRef = React.useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		const checkAndPersistOrder = () => {
+			const domElements = Array.from(containerRef.current!.children).filter(el =>
+				el.getAttribute('data-stock-uid')
+			) as HTMLElement[];
+
+			const domOrder = domElements.map(el => el.getAttribute('data-stock-uid')).join(',');
+
+			if (domOrder && domOrder !== lastOrderRef.current && domOrder.length > 0) {
+				lastOrderRef.current = domOrder;
+
+				const reorderedByDOM = domElements
+					.map(el => {
+						const uid = el.getAttribute('data-stock-uid');
+						return stocks.find(s => s.uid === uid);
+					})
+					.filter(Boolean) as Stock[];
+
+				if (reorderedByDOM.length === stocks.length) {
+					const nextStocks = persistAndSaveStocks(reorderedByDOM);
+					dispatch(setStocks(nextStocks));
+				}
+			}
+		};
+
+		// Watch for DOM changes instead of polling
+		const observer = new MutationObserver(checkAndPersistOrder);
+		observer.observe(containerRef.current, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['data-stock-uid'],
+		});
+
+		return () => observer.disconnect();
+	}, [stocks, dispatch]);
 
 	return (
 		<>
@@ -160,19 +347,27 @@ const StockPage = () => {
 				</div>
 			)}
 
-			<div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 my-4">
-				{stocks.map((item) => (
-					<StockCard
-						key={`${item.symbol}-${item.index}`}
-						localStore={item}
-						refresh={refreshKey}
-						setStockData={getStockData}
-						onUpdate={updateStock}
-						onRemove={removeStock}
-						getMarketStatus={getMarketStatus}
-					/>
-				))}
-			</div>
+			<DragDropProvider onDragEnd={handleDragEnd}>
+				<div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 my-4" ref={containerRef}>
+					{orderedStocks.map((item) => {
+						const displayOrder = (item.index ?? 0) + 1;
+
+						return (
+							<SortableStockCard
+								key={`${item.uid}-${displayOrder}`}
+								item={item}
+								index={item.index}
+								order={displayOrder}
+								refresh={refreshKey}
+								setStockData={getStockData}
+								onUpdate={updateStock}
+								onRemove={removeStock}
+								getMarketStatus={getMarketStatus}
+							/>
+						);
+					})}
+				</div>
+			</DragDropProvider>
 		</>
 	);
 };
