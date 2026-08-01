@@ -159,6 +159,7 @@ input::-webkit-inner-spin-button {
 }
 #content .card .card-body {
   padding-bottom: 3rem;
+  min-height: 120px;
 }
 #content .card .account {
   font-size: 1.6rem;
