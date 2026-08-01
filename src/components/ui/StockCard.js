@@ -13,35 +13,10 @@ const StockTicker = ({ localStore, order, refresh, onUpdate, onRemove, setStockD
 
 	if (!data) {
 		return (
-			<div className="col">
-				<Card className="h-100">
-					<Card.Body>
-						<div className="d-flex justify-content-between align-items-start gap-2">
-							<div>
-								<Card.Title as="h2">{localStore.symbol}</Card.Title>
-								<Card.Text>Loading stock data...</Card.Text>
-							</div>
-							<div className="d-flex align-items-center gap-2">
-								<div className="d-flex align-items-center gap-1">
-									<div ref={handleRef} className="text-muted" style={{ cursor: 'grab' }} aria-label="Drag to reorder">
-										<i className="bi bi-grip-vertical" />
-									</div>
-									<span className="badge bg-secondary ms-1" style={{ fontSize: '0.85rem', lineHeight: '1.2' }} aria-label={`Sort order ${order}`}>
-										#{order}
-									</span>
-								</div>
-								<i className="bi bi-x-square" onClick={removeStock} style={{ cursor: 'pointer' }}></i>
-							</div>
-						</div>
-					</Card.Body>
-					<Card.Footer>
-						<div className="d-flex justify-content-center py-2">
-							<div className="spinner-border" role="status">
-								<span className="visually-hidden">Loading...</span>
-							</div>
-						</div>
-					</Card.Footer>
-				</Card>
+			<div className="d-flex justify-content-center">
+				<div className="spinner-border m-5" role="status">
+					<span className="visually-hidden">Loading...</span>
+				</div>
 			</div>
 		);
 	}
@@ -51,23 +26,18 @@ const StockTicker = ({ localStore, order, refresh, onUpdate, onRemove, setStockD
 			<Card className="h-100">
 				<Card.Body>
 					<div className="d-flex justify-content-between align-items-start gap-2">
-						<div>
-							<Card.Title as="h2">
-								{data.symbol}
-							</Card.Title>
-							<Card.Text>{data.companyName}</Card.Text>
-						</div>
-						<div className="d-flex align-items-center gap-2">
-							<div className="d-flex align-items-center gap-1">
-								<div ref={handleRef} className="text-muted" style={{ cursor: 'grab' }} aria-label="Drag to reorder">
-									<i className="bi bi-grip-vertical" />
-								</div>
-								<span className="badge bg-secondary ms-1" style={{ fontSize: '0.85rem', lineHeight: '1.2' }} aria-label={`Sort order ${order}`}>
-									#{order}
-								</span>
+						<div className="d-flex align-items-start gap-2">
+							<div ref={handleRef} className="text-muted" style={{ cursor: 'grab', marginTop: '0.25rem' }} aria-label="Drag to reorder">
+								<i className="bi bi-grip-vertical" />
 							</div>
-							<i className="bi bi-x-square" onClick={removeStock} style={{ cursor: 'pointer' }}></i>
+							<div>
+								<Card.Title as="h2">
+									{data.symbol}
+								</Card.Title>
+								<Card.Text>{data.companyName}</Card.Text>
+							</div>
 						</div>
+						<i className="bi bi-x-square" onClick={removeStock} style={{ cursor: 'pointer' }}></i>
 					</div>
 				</Card.Body>
 				<Card.Footer>
