@@ -132,7 +132,7 @@ const SortableStockCard = ({ item, index, refresh, onUpdate, onRemove, setStockD
 	});
 
 	return (
-		<div ref={ref} data-stock-uid={item.uid} style={{ opacity: isDragging ? 0.75 : 1 }}>
+		<div ref={ref} className="col" data-stock-uid={item.uid} style={{ opacity: isDragging ? 0.75 : 1 }}>
 			<StockCard
 				localStore={item}
 				refresh={refresh}
