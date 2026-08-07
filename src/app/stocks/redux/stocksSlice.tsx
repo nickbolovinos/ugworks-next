@@ -12,6 +12,11 @@ interface Stock {
 	virtual: boolean;
 	dividends: boolean;
 	currentShares: number | null;
+	sold: boolean;
+	soldDate: string | null;
+	soldPrice: number | null;
+	realizedGain: number | null;
+	realizedGainPercent: number | null;
 }
 
 interface StocksState {
