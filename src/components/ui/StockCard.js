@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { Badge, Card, ListGroup, ListGroupItem } from 'react-bootstrap';
 import { formatCurrency } from '@/lib/utils';
 import YourHoldings from '@/components/ui/YourHoldings';
 import { useStockData } from '@/hooks/useStockData';
@@ -31,7 +31,8 @@ const StockTicker = ({ localStore, refresh, onUpdate, onRemove, setStockData, ge
 						</div>
 						<div>
 							<Card.Title as="h2">
-								{data.symbol}
+								{data.symbol}{' '}
+								{localStore.sold && <Badge bg="secondary">Sold</Badge>}
 							</Card.Title>
 							<Card.Text>{data.companyName}</Card.Text>
 						</div>

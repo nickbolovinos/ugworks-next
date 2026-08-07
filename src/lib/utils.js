@@ -21,6 +21,7 @@ export function formatCurrency(value) {
 
 // Strip a string as currency to numeric
 export function makeNumeric(value) {
+	if (value == null || value === '') return 0;
 	return parseFloat(value.replace(/[^0-9.-]+/g, ''));
 }
 

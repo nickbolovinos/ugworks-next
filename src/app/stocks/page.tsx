@@ -13,6 +13,7 @@ import { ListGroup } from 'react-bootstrap';
 
 const STOCKS_KEY = 'stocks';
 const STOCK_COUNTER_KEY = 'stockCounter';
+const REALIZED_GAINS_KEY = 'realizedGains';
 
 interface Stock {
 	uid: string;
@@ -25,6 +26,11 @@ interface Stock {
 	virtual: boolean;
 	dividends: boolean;
 	currentShares: number | null;
+	sold: boolean;
+	soldDate: string | null;
+	soldPrice: number | null;
+	realizedGain: number | null;
+	realizedGainPercent: number | null;
 }
 
 interface StockCalc {
@@ -38,14 +44,16 @@ interface StockCalc {
 	virtual: boolean;
 	dividends: boolean;
 	currentShares: number;
+	sold: boolean;
 }
 
 const DEFAULT_KEYS: (keyof Stock)[] = ['index', 'symbol', 'asset', 'initialShares', 'initialPrice', 'account', 'virtual', 'dividends', 'currentShares'];
+const SOLD_DEFAULTS = { sold: false, soldDate: null, soldPrice: null, realizedGain: null, realizedGainPercent: null };
 const DEFAULT_STOCKS: Omit<Stock, 'uid'>[] = [
-	{ index: 0, symbol: 'AAPL', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
-	{ index: 1, symbol: 'AVGO', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
-	{ index: 2, symbol: 'MSFT', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
-	{ index: 3, symbol: 'NVDA', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null },
+	{ index: 0, symbol: 'AAPL', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null, ...SOLD_DEFAULTS },
+	{ index: 1, symbol: 'AVGO', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null, ...SOLD_DEFAULTS },
+	{ index: 2, symbol: 'MSFT', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null, ...SOLD_DEFAULTS },
+	{ index: 3, symbol: 'NVDA', asset: 'STOCKS', initialShares: null, initialPrice: null, account: '', virtual: false, dividends: false, currentShares: null, ...SOLD_DEFAULTS },
 ];
 
 interface TotalHoldings {
@@ -79,6 +87,11 @@ const persistStocks = (items: Stock[]) => {
 		...stock,
 		uid: stock.uid ?? createStockUid(),
 		index,
+		sold: stock.sold ?? false,
+		soldDate: stock.soldDate ?? null,
+		soldPrice: stock.soldPrice ?? null,
+		realizedGain: stock.realizedGain ?? null,
+		realizedGainPercent: stock.realizedGainPercent ?? null,
 	}));
 };
 
@@ -118,6 +131,11 @@ const loadStocksFromStorage = (): Stock[] | null => {
 			...stock,
 			index,
 			uid: stock.uid ?? createStockUid(),
+			sold: stock.sold ?? false,
+			soldDate: stock.soldDate ?? null,
+			soldPrice: stock.soldPrice ?? null,
+			realizedGain: stock.realizedGain ?? null,
+			realizedGainPercent: stock.realizedGainPercent ?? null,
 		}));
 	} catch {
 		return null;
@@ -154,9 +172,20 @@ const StockPage = () => {
 	const [stockData, setStockData] = useState<StockCalc[]>([]);
 	const [totalHoldings, setTotalHoldings] = useState<TotalHoldings>({ dailyGain: 0, netGain: 0, totalValue: 0, netPercent: 0 });
 	const [marketStatus, setMarketStatus] = useState<string | null>(null);
+	const [realizedGainsTotal, setRealizedGainsTotal] = useState<number>(0);
 	const initialLoadComplete = React.useRef(false);
 
 	const fetchStocks = () => setRefreshKey(prev => prev + 1);
+
+	const addRealizedGain = (amount: number) => {
+		setRealizedGainsTotal(prev => {
+			const next = prev + amount;
+			if (typeof window !== 'undefined') {
+				localStorage.setItem(REALIZED_GAINS_KEY, String(next));
+			}
+			return next;
+		});
+	};
 
 	const addStock = (item: Stock) => {
 		const exists = stocks.some(stock => stock.symbol === item.symbol);
@@ -164,7 +193,7 @@ const StockPage = () => {
 		const createAndAddStock = () => {
 			const newStock = DEFAULT_KEYS.reduce((obj, key) => {
 				return { ...obj, [key]: item[key] ?? null };
-			}, {} as Stock);
+			}, { ...SOLD_DEFAULTS } as Stock);
 
 			newStock.index = addIndex(STOCK_COUNTER_KEY);
 			newStock.uid = createStockUid();
@@ -185,6 +214,13 @@ const StockPage = () => {
 	};
 
 	const updateStock = (item: Stock) => {
+		const prevStock = stocks.find(s => s.index === item.index);
+		if (prevStock && !prevStock.sold && item.sold) {
+			addRealizedGain(item.realizedGain ?? 0);
+		} else if (prevStock && prevStock.sold && item.sold === false) {
+			addRealizedGain(-(prevStock.realizedGain ?? 0));
+		}
+
 		const updatedStocks = stocks.map(s =>
 			s.index === item.index ? { ...s, ...item } : s
 		);
@@ -233,7 +269,7 @@ const StockPage = () => {
 	useEffect(() => {
 		if (stocks.length === stockData.length && stocks.length > 0) {
 			const totals = stockData.reduce((acc, s) => {
-				if (s.virtual) return acc;
+				if (s.virtual || s.sold) return acc;
 				return {
 					dailyGain: acc.dailyGain + s.dailyGain,
 					netGain: acc.netGain + s.netGain,
@@ -241,10 +277,13 @@ const StockPage = () => {
 				};
 			}, { dailyGain: 0, netGain: 0, totalValue: 0 });
 
-			const netPercent = Number(((totals.dailyGain / (totals.totalValue - totals.dailyGain)) * 100).toFixed(2));
+			totals.netGain += realizedGainsTotal;
+
+			const priorValue = totals.totalValue - totals.dailyGain;
+			const netPercent = priorValue ? Number(((totals.dailyGain / priorValue) * 100).toFixed(2)) : 0;
 			setTotalHoldings({ ...totals, netPercent });
 		}
-	}, [stockData, stocks]);
+	}, [stockData, stocks, realizedGainsTotal]);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') {
@@ -255,16 +294,18 @@ const StockPage = () => {
 		if (storedStocks) {
 			const nextStocks = persistStocks(storedStocks);
 			dispatch(setStocks(nextStocks));
-			return;
+		} else {
+			const initialStocks = DEFAULT_STOCKS.map(stock => ({
+				...stock,
+				index: addIndex(STOCK_COUNTER_KEY),
+				uid: createStockUid(),
+			}));
+			const nextStocks = persistStocks(initialStocks);
+			dispatch(setStocks(nextStocks));
 		}
 
-		const initialStocks = DEFAULT_STOCKS.map(stock => ({
-			...stock,
-			index: addIndex(STOCK_COUNTER_KEY),
-			uid: createStockUid(),
-		}));
-		const nextStocks = persistStocks(initialStocks);
-		dispatch(setStocks(nextStocks));
+		const storedRealizedGains = parseFloat(localStorage.getItem(REALIZED_GAINS_KEY) ?? '0');
+		setRealizedGainsTotal(Number.isNaN(storedRealizedGains) ? 0 : storedRealizedGains);
 	}, [dispatch]);
 
 	useEffect(() => {
@@ -333,7 +374,7 @@ const StockPage = () => {
 				<SearchStock onSelect={addStock} />
 			</h1>
 
-			{totalHoldings.totalValue > 0 && (
+			{(totalHoldings.totalValue > 0 || realizedGainsTotal !== 0) && (
 				<div className="col-xs-6 col-sm-4 row-cols-1 g-2">
 					<h2>Your Holdings:</h2>
 					<ListGroup className="holdings list-group-flush">
