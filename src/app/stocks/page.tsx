@@ -241,7 +241,7 @@ const StockPage = () => {
 		setMarketStatus(market);
 	};
 
-	const handleDragEnd = (event: DragEndEvent) => {
+	const handleDragEndActive = (event: DragEndEvent) => {
 		const activeId = event.operation?.source?.id;
 		const overId = event.operation?.target?.id;
 
@@ -249,20 +249,61 @@ const StockPage = () => {
 			return;
 		}
 
-		const orderedStocks = sortStocks(stocks);
-		const fromIndex = orderedStocks.findIndex(stock => String(stock.uid) === String(activeId));
-		const toIndex = orderedStocks.findIndex(stock => String(stock.uid) === String(overId));
+		const activeStockItem = activeStocks.find(s => String(s.uid) === String(activeId));
+		const overStockItem = activeStocks.find(s => String(s.uid) === String(overId));
+
+		if (!activeStockItem || !overStockItem) {
+			return;
+		}
+
+		const orderedSectionStocks = activeStocks;
+		const fromIndex = orderedSectionStocks.findIndex(stock => String(stock.uid) === String(activeId));
+		const toIndex = orderedSectionStocks.findIndex(stock => String(stock.uid) === String(overId));
 
 		if (fromIndex === -1 || toIndex === -1) {
 			return;
 		}
 
-		const reorderedStocks = [...orderedStocks];
-		const [movedStock] = reorderedStocks.splice(fromIndex, 1);
+		const reorderedSection = [...orderedSectionStocks];
+		const [movedStock] = reorderedSection.splice(fromIndex, 1);
 		const adjustedIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
-		reorderedStocks.splice(adjustedIndex, 0, movedStock);
+		reorderedSection.splice(adjustedIndex, 0, movedStock);
 
-		const nextStocks = persistAndSaveStocks(reorderedStocks);
+		const otherSection = soldStocks;
+		const nextStocks = persistAndSaveStocks([...reorderedSection, ...otherSection]);
+		dispatch(setStocks(nextStocks));
+	};
+
+	const handleDragEndSold = (event: DragEndEvent) => {
+		const activeId = event.operation?.source?.id;
+		const overId = event.operation?.target?.id;
+
+		if (activeId == null || overId == null || activeId === overId) {
+			return;
+		}
+
+		const activeStockItem = soldStocks.find(s => String(s.uid) === String(activeId));
+		const overStockItem = soldStocks.find(s => String(s.uid) === String(overId));
+
+		if (!activeStockItem || !overStockItem) {
+			return;
+		}
+
+		const orderedSectionStocks = soldStocks;
+		const fromIndex = orderedSectionStocks.findIndex(stock => String(stock.uid) === String(activeId));
+		const toIndex = orderedSectionStocks.findIndex(stock => String(stock.uid) === String(overId));
+
+		if (fromIndex === -1 || toIndex === -1) {
+			return;
+		}
+
+		const reorderedSection = [...orderedSectionStocks];
+		const [movedStock] = reorderedSection.splice(fromIndex, 1);
+		const adjustedIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
+		reorderedSection.splice(adjustedIndex, 0, movedStock);
+
+		const otherSection = activeStocks;
+		const nextStocks = persistAndSaveStocks([...otherSection, ...reorderedSection]);
 		dispatch(setStocks(nextStocks));
 	};
 
@@ -322,91 +363,75 @@ const StockPage = () => {
 		saveStocksToStorage(stocks);
 	}, [stocks]);
 
-	const orderedStocks = sortStocks(stocks);
-	const lastOrderRef = React.useRef<string>('');
-	const containerRef = React.useRef<HTMLDivElement>(null);
+	const activeStocks = sortStocks(stocks.filter(s => !s.sold));
+	const soldStocks = sortStocks(stocks.filter(s => s.sold));
 
-	useEffect(() => {
-		if (!containerRef.current) return;
+		return (
+			<>
+				<h1 className="row row-cols-2 g-2">
+					<span className="col">
+						Stock Ticker <button className="btn btn-primary" onClick={fetchStocks}><i className="bi bi-arrow-clockwise" /></button>
+					</span>
+					<SearchStock onSelect={addStock} />
+				</h1>
 
-		const checkAndPersistOrder = () => {
-			const domElements = Array.from(containerRef.current!.children).filter(el =>
-				el.getAttribute('data-stock-uid')
-			) as HTMLElement[];
+				{(totalHoldings.totalValue > 0 || realizedGainsTotal !== 0) && (
+					<div className="col-xs-6 col-sm-4 row-cols-1 g-2">
+						<h2>Your Holdings:</h2>
+						<ListGroup className="holdings list-group-flush">
+							<ListGroup.Item><h4>Market Status: {marketStatus}</h4></ListGroup.Item>
+							<ListGroup.Item><h4>Value: <strong style={{ color: hasMinusSymbol(totalHoldings.totalValue) ? 'red' : 'green' }}>{formatCurrency(totalHoldings.totalValue)}</strong></h4></ListGroup.Item>
+							<ListGroup.Item><h4>{`Today's Gain: `}<strong style={{ color: hasMinusSymbol(totalHoldings.dailyGain) ? 'red' : 'green' }}>{formatCurrency(totalHoldings.dailyGain)}</strong></h4></ListGroup.Item>
+							<ListGroup.Item><h4>{`Today's Percent Gain: `}<strong style={{ color: hasMinusSymbol(totalHoldings.netPercent) ? 'red' : 'green' }}>{totalHoldings.netPercent}%</strong></h4></ListGroup.Item>
+							<ListGroup.Item><h4>Net Gain: <strong style={{ color: hasMinusSymbol(totalHoldings.netGain) ? 'red' : 'green' }}>{formatCurrency(totalHoldings.netGain)}</strong></h4></ListGroup.Item>
+						</ListGroup>
+					</div>
+				)}
 
-			const domOrder = domElements.map(el => el.getAttribute('data-stock-uid')).join(',');
+				<DragDropProvider onDragEnd={handleDragEndActive}>
+					<h2 className="mt-4">Active Stocks</h2>
+					<div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 my-4">
+						{activeStocks.map((item) => {
+							return (
+								<SortableStockCard
+									key={item.uid}
+									item={item}
+									index={item.index}
+									refresh={refreshKey}
+									setStockData={getStockData}
+									onUpdate={updateStock}
+									onRemove={removeStock}
+									getMarketStatus={getMarketStatus}
+								/>
+							);
+						})}
+					</div>
+				</DragDropProvider>
 
-			if (domOrder && domOrder !== lastOrderRef.current && domOrder.length > 0) {
-				lastOrderRef.current = domOrder;
-
-				const reorderedByDOM = domElements
-					.map(el => {
-						const uid = el.getAttribute('data-stock-uid');
-						return stocks.find(s => s.uid === uid);
-					})
-					.filter(Boolean) as Stock[];
-
-				if (reorderedByDOM.length === stocks.length) {
-					const nextStocks = persistAndSaveStocks(reorderedByDOM);
-					dispatch(setStocks(nextStocks));
-				}
-			}
-		};
-
-		// Watch for DOM changes instead of polling
-		const observer = new MutationObserver(checkAndPersistOrder);
-		observer.observe(containerRef.current, {
-			childList: true,
-			subtree: true,
-			attributes: true,
-			attributeFilter: ['data-stock-uid'],
-		});
-
-		return () => observer.disconnect();
-	}, [stocks, dispatch]);
-
-	return (
-		<>
-			<h1 className="row row-cols-2 g-2">
-				<span className="col">
-					Stock Ticker <button className="btn btn-primary" onClick={fetchStocks}><i className="bi bi-arrow-clockwise" /></button>
-				</span>
-				<SearchStock onSelect={addStock} />
-			</h1>
-
-			{(totalHoldings.totalValue > 0 || realizedGainsTotal !== 0) && (
-				<div className="col-xs-6 col-sm-4 row-cols-1 g-2">
-					<h2>Your Holdings:</h2>
-					<ListGroup className="holdings list-group-flush">
-						<ListGroup.Item><h4>Market Status: {marketStatus}</h4></ListGroup.Item>
-						<ListGroup.Item><h4>Value: <strong style={{ color: hasMinusSymbol(totalHoldings.totalValue) ? 'red' : 'green' }}>{formatCurrency(totalHoldings.totalValue)}</strong></h4></ListGroup.Item>
-						<ListGroup.Item><h4>{`Today's Gain: `}<strong style={{ color: hasMinusSymbol(totalHoldings.dailyGain) ? 'red' : 'green' }}>{formatCurrency(totalHoldings.dailyGain)}</strong></h4></ListGroup.Item>
-						<ListGroup.Item><h4>{`Today's Percent Gain: `}<strong style={{ color: hasMinusSymbol(totalHoldings.netPercent) ? 'red' : 'green' }}>{totalHoldings.netPercent}%</strong></h4></ListGroup.Item>
-						<ListGroup.Item><h4>Net Gain: <strong style={{ color: hasMinusSymbol(totalHoldings.netGain) ? 'red' : 'green' }}>{formatCurrency(totalHoldings.netGain)}</strong></h4></ListGroup.Item>
-					</ListGroup>
-				</div>
-			)}
-
-			<DragDropProvider onDragEnd={handleDragEnd}>
-				<div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 my-4" ref={containerRef}>
-					{orderedStocks.map((item) => {
-						return (
-							<SortableStockCard
-								key={item.uid}
-								item={item}
-								index={item.index}
-								refresh={refreshKey}
-								setStockData={getStockData}
-								onUpdate={updateStock}
-								onRemove={removeStock}
-								getMarketStatus={getMarketStatus}
-							/>
-						);
-					})}
-				</div>
-			</DragDropProvider>
-		</>
-	);
+				{soldStocks.length > 0 && (
+					<DragDropProvider onDragEnd={handleDragEndSold}>
+						<hr className="my-5" />
+						<h2>Sold Stocks</h2>
+						<div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4 my-4">
+							{soldStocks.map((item) => {
+								return (
+									<SortableStockCard
+										key={item.uid}
+										item={item}
+										index={item.index}
+										refresh={refreshKey}
+										setStockData={getStockData}
+										onUpdate={updateStock}
+										onRemove={removeStock}
+										getMarketStatus={getMarketStatus}
+									/>
+								);
+							})}
+						</div>
+					</DragDropProvider>
+				)}
+			</>
+		);
 };
 
 export default StockPage;
