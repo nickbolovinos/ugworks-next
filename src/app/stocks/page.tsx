@@ -13,7 +13,6 @@ import { ListGroup } from 'react-bootstrap';
 
 const STOCKS_KEY = 'stocks';
 const STOCK_COUNTER_KEY = 'stockCounter';
-const REALIZED_GAINS_KEY = 'realizedGains';
 
 interface Stock {
 	uid: string;
@@ -172,20 +171,13 @@ const StockPage = () => {
 	const [stockData, setStockData] = useState<StockCalc[]>([]);
 	const [totalHoldings, setTotalHoldings] = useState<TotalHoldings>({ dailyGain: 0, netGain: 0, totalValue: 0, netPercent: 0 });
 	const [marketStatus, setMarketStatus] = useState<string | null>(null);
-	const [realizedGainsTotal, setRealizedGainsTotal] = useState<number>(0);
 	const initialLoadComplete = React.useRef(false);
+	const realizedGainsTotal = React.useMemo(
+		() => stocks.reduce((sum, stock) => sum + (stock.sold ? Number(stock.realizedGain ?? 0) : 0), 0),
+		[stocks]
+	);
 
 	const fetchStocks = () => setRefreshKey(prev => prev + 1);
-
-	const addRealizedGain = (amount: number) => {
-		setRealizedGainsTotal(prev => {
-			const next = prev + amount;
-			if (typeof window !== 'undefined') {
-				localStorage.setItem(REALIZED_GAINS_KEY, String(next));
-			}
-			return next;
-		});
-	};
 
 	const addStock = (item: Stock) => {
 		const exists = stocks.some(stock => stock.symbol === item.symbol);
@@ -214,13 +206,6 @@ const StockPage = () => {
 	};
 
 	const updateStock = (item: Stock) => {
-		const prevStock = stocks.find(s => s.index === item.index);
-		if (prevStock && !prevStock.sold && item.sold) {
-			addRealizedGain(item.realizedGain ?? 0);
-		} else if (prevStock && prevStock.sold && item.sold === false) {
-			addRealizedGain(-(prevStock.realizedGain ?? 0));
-		}
-
 		const updatedStocks = stocks.map(s =>
 			s.index === item.index ? { ...s, ...item } : s
 		);
@@ -345,8 +330,6 @@ const StockPage = () => {
 			dispatch(setStocks(nextStocks));
 		}
 
-		const storedRealizedGains = parseFloat(localStorage.getItem(REALIZED_GAINS_KEY) ?? '0');
-		setRealizedGainsTotal(Number.isNaN(storedRealizedGains) ? 0 : storedRealizedGains);
 	}, [dispatch]);
 
 	useEffect(() => {
